@@ -1,0 +1,12 @@
+# temp files
+**/*.o
+**/*.d
+**/*.bak
+**/*._*
+**/*.run
+**/Debug/
+**/Release/
+**/*.log
+.metadata
+/build/
+/dist/

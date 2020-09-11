@@ -1,4 +1,8 @@
 #include <gtest/gtest.h>
+
+// Open private members for tests
+#define SCOPE(scope) public
+
 #include "microprop.h"
 
 class test_class {
@@ -25,28 +29,28 @@ TEST(Microprop, Types) {
     uint8_t *blob2 = &blob[0];
     const char *str = "Test string";
 
-    EXPECT_EQ(Microprop::Type::Bool, Microprop::DataType(b));
-    EXPECT_EQ(Microprop::Type::Byte, Microprop::DataType(byte));
-    EXPECT_EQ(Microprop::Type::Byte, Microprop::DataType(byte2));
-    EXPECT_EQ(Microprop::Type::Word, Microprop::DataType(word));
-    EXPECT_EQ(Microprop::Type::Word, Microprop::DataType(word2));
-    EXPECT_EQ(Microprop::Type::DWord, Microprop::DataType(dword));
-    EXPECT_EQ(Microprop::Type::DDWord, Microprop::DataType(ddword));
-    EXPECT_EQ(Microprop::Type::Float, Microprop::DataType(f));
-    EXPECT_EQ(Microprop::Type::Double, Microprop::DataType(d));
-    EXPECT_EQ(Microprop::Type::Array16, Microprop::DataType(a16));
-    EXPECT_EQ(Microprop::Type::Array32, Microprop::DataType(a32));
-    EXPECT_EQ(Microprop::Type::Array64, Microprop::DataType(a64));
-    EXPECT_EQ(Microprop::Type::ArrayFloat, Microprop::DataType(af));
-    EXPECT_EQ(Microprop::Type::ArrayDouble, Microprop::DataType(ad));
+    EXPECT_EQ(Microprop::Type::Bool, Microprop::CalcDataType(b));
+    EXPECT_EQ(Microprop::Type::Byte, Microprop::CalcDataType(byte));
+    EXPECT_EQ(Microprop::Type::Byte, Microprop::CalcDataType(byte2));
+    EXPECT_EQ(Microprop::Type::Word, Microprop::CalcDataType(word));
+    EXPECT_EQ(Microprop::Type::Word, Microprop::CalcDataType(word2));
+    EXPECT_EQ(Microprop::Type::DWord, Microprop::CalcDataType(dword));
+    EXPECT_EQ(Microprop::Type::DDWord, Microprop::CalcDataType(ddword));
+    EXPECT_EQ(Microprop::Type::Float, Microprop::CalcDataType(f));
+    EXPECT_EQ(Microprop::Type::Double, Microprop::CalcDataType(d));
+    EXPECT_EQ(Microprop::Type::Array16, Microprop::CalcDataType(a16));
+    EXPECT_EQ(Microprop::Type::Array32, Microprop::CalcDataType(a32));
+    EXPECT_EQ(Microprop::Type::Array64, Microprop::CalcDataType(a64));
+    EXPECT_EQ(Microprop::Type::ArrayFloat, Microprop::CalcDataType(af));
+    EXPECT_EQ(Microprop::Type::ArrayDouble, Microprop::CalcDataType(ad));
     //test_class aclass[10];
     //EXPECT_EQ(Microprop::Type::Error, Microprop::DataType(aclass)); // Fail compile
     //EXPECT_EQ(Microprop::Type::Error, Microprop::DataType(aclass[0])); // Fail compile
 
 
-    EXPECT_EQ(Microprop::Type::String, Microprop::DataType(str));
-    EXPECT_EQ(Microprop::Type::Blob, Microprop::DataType(blob));
-    ASSERT_EQ(Microprop::Type::Error, Microprop::DataType(blob2)); // Fail reference
+    EXPECT_EQ(Microprop::Type::String, Microprop::CalcDataType(str));
+    EXPECT_EQ(Microprop::Type::Blob, Microprop::CalcDataType(blob));
+    ASSERT_EQ(Microprop::Type::Error, Microprop::CalcDataType(blob2)); // Fail reference
 
     EXPECT_EQ(1, Microprop::CalcDataSize(b));
     EXPECT_EQ(1, Microprop::CalcDataSize(byte));
@@ -136,32 +140,80 @@ TEST(Microprop, FixedSize) {
     double d = 0.123;
 
     EXPECT_TRUE(prop.Append("bool", b));
+    ASSERT_EQ(6, prop.GetUsed());
     EXPECT_TRUE(prop.Append("byte1", (int8_t) 1));
+    ASSERT_EQ(13, prop.GetUsed());
     EXPECT_TRUE(prop.Append("byte2", byte));
+    ASSERT_EQ(20, prop.GetUsed());
 
     EXPECT_TRUE(prop.Append("word1", (uint16_t) 2));
+    ASSERT_EQ(28, prop.GetUsed());
     EXPECT_TRUE(prop.Append("word2", word));
+    ASSERT_EQ(36, prop.GetUsed());
 
     EXPECT_TRUE(prop.Append("dword1", 3));
+    ASSERT_EQ(47, prop.GetUsed());
     EXPECT_TRUE(prop.Append("dword2", dword));
     EXPECT_EQ(58, prop.GetUsed());
 
     EXPECT_TRUE(prop.Append("ddword1", (int64_t) 4));
+    EXPECT_EQ(74, prop.GetUsed());
     EXPECT_TRUE(prop.Append("ddword2", ddword));
     EXPECT_EQ(90, prop.GetUsed());
 
     EXPECT_TRUE(prop.Append("float", 5, 0.123456f));
+    EXPECT_EQ(100, prop.GetUsed());
     EXPECT_TRUE(prop.Append("float2", f));
     EXPECT_EQ(111, prop.GetUsed());
 
     EXPECT_TRUE(prop.Append("double", 0.121212));
+    EXPECT_EQ(126, prop.GetUsed());
     EXPECT_TRUE(prop.Append("double2", d));
     EXPECT_EQ(142, prop.GetUsed());
 
 
     EXPECT_TRUE(prop.Append(123456, 0.121212)); // 4 bytes in key
+    EXPECT_EQ(155, prop.GetUsed());
     EXPECT_TRUE(prop.Append((uint16_t) 123456, d)); // 2 bytes in key
     EXPECT_EQ(166, prop.GetUsed());
+
+    const uint8_t *next_ptr=nullptr;
+    
+    next_ptr = prop.GetBuffer();
+    ASSERT_EQ(next_ptr, prop.m_data);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[6]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[13]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[20]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[28]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[36]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[47]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[58]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[74]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[90]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[100]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[111]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[126]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[142]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[155]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, &prop.m_data[166]);
+    next_ptr = prop.FieldNext(next_ptr);
+    ASSERT_EQ(next_ptr, nullptr);
+
 
     bool read_b;
     uint8_t read_byte;
@@ -373,10 +425,56 @@ TEST(Microprop, Array) {
     EXPECT_TRUE(memcmp(d, dres, sizeof (d)) == 0);
 }
 
+TEST(Microprop, ReadOnly) {
+    Microprop prop1;
+    EXPECT_FALSE(prop1.IsReadOnly());
+
+    uint8_t buffer[100];
+    Microprop prop2(buffer, sizeof (buffer));
+    EXPECT_FALSE(prop2.IsReadOnly());
+
+    Microprop prop_ro((const uint8_t *) buffer, sizeof (buffer));
+    EXPECT_TRUE(prop_ro.IsReadOnly());
+
+    EXPECT_FALSE(prop1.Append("bool", true));
+    EXPECT_FALSE(prop1.Append("byte", (int8_t) 25));
+    EXPECT_FALSE(prop1.Append("dword", 123456));
+
+    EXPECT_TRUE(prop2.Append("bool", true));
+    EXPECT_TRUE(prop2.Append("byte", (int8_t) 25));
+    EXPECT_TRUE(prop2.Append("dword", 123456));
+
+    EXPECT_FALSE(prop_ro.Append("bool2", true));
+    EXPECT_FALSE(prop_ro.Append("byte2", (int8_t) 25));
+    EXPECT_FALSE(prop_ro.Append("dword2", 123456));
+
+    EXPECT_TRUE(prop_ro.FieldExist("bool"));
+    EXPECT_TRUE(prop_ro.FieldExist("byte"));
+    EXPECT_TRUE(prop_ro.FieldExist("dword"));
+    EXPECT_FALSE(prop_ro.FieldExist("error"));
+
+    prop1.AssignBuffer((const uint8_t *) buffer, sizeof (buffer));
+    EXPECT_TRUE(prop1.IsReadOnly());
+    EXPECT_FALSE(prop1.Append("bool2", true));
+    EXPECT_FALSE(prop1.Append("byte2", (int8_t) 25));
+    EXPECT_FALSE(prop1.Append("dword2", 123456));
+
+    EXPECT_TRUE(prop1.FieldExist("bool"));
+    EXPECT_TRUE(prop1.FieldExist("byte"));
+    EXPECT_TRUE(prop1.FieldExist("dword"));
+    EXPECT_FALSE(prop1.FieldExist("error"));
+
+    prop1.AssignBuffer(buffer, sizeof (buffer));
+    EXPECT_FALSE(prop1.IsReadOnly());
+    EXPECT_TRUE(prop1.Append("bool2", true));
+    EXPECT_TRUE(prop1.Append("byte2", (int8_t) 25));
+    EXPECT_TRUE(prop1.Append("dword2", 123456));
+}
+
 #include <cstdio>
 
 GTEST_API_ int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
 #include <gtest/googletest/src/gtest-all.cc>

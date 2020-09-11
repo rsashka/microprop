@@ -4,6 +4,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Исходные файлы"
                    projectFiles="true">
+      <itemPath>../gtest/googletest/README.md</itemPath>
       <itemPath>microprop.h</itemPath>
       <itemPath>microprop_test.cpp</itemPath>
     </logicalFolder>
@@ -51,6 +52,8 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="../gtest/googletest/README.md" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="microprop.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="microprop_test.cpp" ex="false" tool="1" flavor2="0">
@@ -76,6 +79,8 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="../gtest/googletest/README.md" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="microprop.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="microprop_test.cpp" ex="false" tool="1" flavor2="0">

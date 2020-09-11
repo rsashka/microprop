@@ -27,8 +27,10 @@
       <runprofile version="9">
         <runcommandpicklist>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" --gtest_shuffle --gtest_filter=*Bool</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" --gtest_shuffle --gtest_filter=*</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}"</runcommand>
+        <runcommand>"${OUTPUT_PATH}" --gtest_shuffle --gtest_filter=*</runcommand>
         <rundir></rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

@@ -43,9 +43,9 @@ TEST(Microprop, Types) {
     EXPECT_EQ(Microprop::Type::Array64, Microprop::CalcDataType(a64));
     EXPECT_EQ(Microprop::Type::ArrayFloat, Microprop::CalcDataType(af));
     EXPECT_EQ(Microprop::Type::ArrayDouble, Microprop::CalcDataType(ad));
-    //test_class aclass[10];
-    //EXPECT_EQ(Microprop::Type::Error, Microprop::DataType(aclass)); // Fail compile
-    //EXPECT_EQ(Microprop::Type::Error, Microprop::DataType(aclass[0])); // Fail compile
+    //    test_class aclass[10];
+    //    EXPECT_EQ(Microprop::Type::Error, Microprop::CalcDataType(aclass)); // Fail compile
+    //    EXPECT_EQ(Microprop::Type::Error, Microprop::CalcDataType(aclass[0])); // Fail compile
 
 
     EXPECT_EQ(Microprop::Type::String, Microprop::CalcDataType(str));
@@ -177,8 +177,8 @@ TEST(Microprop, FixedSize) {
     EXPECT_TRUE(prop.Append((uint16_t) 123456, d)); // 2 bytes in key
     EXPECT_EQ(166, prop.GetUsed());
 
-    const uint8_t *next_ptr=nullptr;
-    
+    const uint8_t *next_ptr = nullptr;
+
     next_ptr = prop.GetBuffer();
     ASSERT_EQ(next_ptr, prop.m_data);
     next_ptr = prop.FieldNext(next_ptr);
@@ -290,36 +290,40 @@ TEST(Microprop, String) {
     EXPECT_EQ(sizeof (buffer), prop.GetSize());
 
     const char *str = "string";
-    EXPECT_TRUE(prop.Append("str1", str));
+    EXPECT_TRUE(prop.AppendAsString("str1", str));
     EXPECT_EQ(6 + 4 + 1 + 2, prop.GetUsed());
 
-    EXPECT_TRUE(prop.Append("str2", str));
+    EXPECT_TRUE(prop.AppendAsString((uint32_t) 1234, str));
     EXPECT_EQ(2 * (6 + 4 + 1 + 2), prop.GetUsed());
     EXPECT_EQ(26, prop.GetUsed());
 
     const char *str2 = "str";
-    EXPECT_FALSE(prop.Append("lg", str2));
-    EXPECT_TRUE(prop.Append("short name", 1, str2));
+    EXPECT_FALSE(prop.AppendAsString("lg", str2));
+    EXPECT_TRUE(prop.AppendAsString("short name", 1, str2));
     EXPECT_EQ(33, prop.GetUsed());
 
 
-    const char * result;
+    size_t str_len;
+    const char *res;
 
     EXPECT_TRUE(prop.FieldExist("str1"));
     EXPECT_EQ(buffer, prop.FieldExist("str1"));
-    EXPECT_EQ(6, prop.Read("str1", result));
-    EXPECT_STREQ(result, str);
+    res = prop.ReadAsString("str1", &str_len);
+    EXPECT_EQ(6, str_len);
+    EXPECT_STREQ(res, str);
 
 
-    EXPECT_TRUE(prop.FieldExist("str2"));
-    EXPECT_EQ(&buffer[13], prop.FieldExist("str2"));
-    EXPECT_TRUE(prop.Read("str2", result));
-    EXPECT_STREQ(result, str);
+    EXPECT_TRUE(prop.FieldExist((uint32_t) 1234));
+    EXPECT_EQ(&buffer[13], prop.FieldExist((uint32_t) 1234));
+    res = prop.ReadAsString((uint32_t) 1234, &str_len);
+    EXPECT_EQ(6, str_len);
+    EXPECT_STREQ(res, str);
 
     EXPECT_TRUE(prop.FieldExist("ssss", 1));
     EXPECT_EQ(&buffer[26], prop.FieldExist("ssss", 1));
-    EXPECT_EQ(3, prop.Read("s", 1, result));
-    EXPECT_STREQ(result, str2);
+    res = prop.ReadAsString("s", 1, &str_len);
+    EXPECT_EQ(3, str_len);
+    EXPECT_STREQ(res, str2);
 }
 
 TEST(Microprop, Blob) {
@@ -328,25 +332,33 @@ TEST(Microprop, Blob) {
     Microprop prop(buffer, sizeof (buffer));
     EXPECT_EQ(sizeof (buffer), prop.GetSize());
 
-    uint8_t b10[10];
-    uint16_t w20[20];
-    uint32_t d5[5];
-    uint32_t large[100];
+    uint8_t b5[5] = {5, 5, 5, 5, 5};
+    uint8_t b10[10] = {1, 2, 3, 4, 5, 6};
+    uint8_t b20[20] = {2, 2, 2, 2, 2, 2, 2, 2, 3, 4, 5, 6};
+    uint8_t large[300];
 
-    EXPECT_TRUE(prop.Append("b10", b10, sizeof (b10)));
-    EXPECT_EQ(10 + 3 + 1 + 1, prop.GetUsed());
+    EXPECT_EQ(5, prop.Append("b5", b5, sizeof (b5)));
+    EXPECT_EQ(9, prop.GetUsed());
 
-    EXPECT_TRUE(prop.Append("w20", 3, (uint8_t *) w20, sizeof (w20)));
-    EXPECT_EQ(15 + 40 + 3 + 1 + 1, prop.GetUsed());
+    EXPECT_EQ(10, prop.Append((int16_t) 10, b10, sizeof (b10)));
+    EXPECT_EQ(23, prop.GetUsed());
 
-    EXPECT_TRUE(prop.Append("w20_2", (uint8_t *) w20, sizeof (w20)));
-    EXPECT_EQ(107, prop.GetUsed());
+    EXPECT_EQ(20, prop.Append("b20", 3, b20, sizeof (b20)));
+    EXPECT_EQ(48, prop.GetUsed());
 
-    EXPECT_TRUE(prop.Append("d5", (uint8_t *) d5, sizeof (d5)));
-    EXPECT_EQ(131, prop.GetUsed());
+    EXPECT_EQ(0, prop.Append("large", large, sizeof (large)));
+    EXPECT_EQ(48, prop.GetUsed());
 
-    EXPECT_FALSE(prop.Append("large", (uint8_t *) large, sizeof (large)));
-    EXPECT_EQ(131, prop.GetUsed());
+    EXPECT_EQ(5, prop.Read("b5", large, sizeof (large)));
+    EXPECT_TRUE(memcmp(large, b5, sizeof (b5)) == 0);
+
+    EXPECT_EQ(10, prop.Read((int16_t) 10, large, sizeof (b10)));
+    EXPECT_TRUE(memcmp(large, b10, sizeof (b10)) == 0);
+
+    EXPECT_EQ(20, prop.Read("b20", 3, large, sizeof (large)));
+    EXPECT_TRUE(memcmp(large, b20, sizeof (b20)) == 0);
+
+    EXPECT_EQ(0, prop.Read("fail", large, sizeof (large)));
 }
 
 TEST(Microprop, Array) {
@@ -426,6 +438,7 @@ TEST(Microprop, Array) {
 }
 
 TEST(Microprop, ReadOnly) {
+
     Microprop prop1;
     EXPECT_FALSE(prop1.IsReadOnly());
 

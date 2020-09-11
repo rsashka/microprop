@@ -29,7 +29,9 @@
  * - Limits for field name size (field ID) - 16 byte as string, blob or fixed length numbers.
  * - Limit on the size of variable length fields - 252 bytes.
  * - The total size of serialized data is not limited.
- * - Supports serialization of 8, 16, 32, 64 bit integers and floating and double precision.
+ * - Supports serialization of 8, 16, 32, 64 bit integers, bool, float and double types.
+ * - Supports blob as arrays bytes.
+ * - Supports null terminated string.
  * - Supports serialization of one-dimensional arrays for all types of numbers.
  * - Supports read-only mode. For example, when storing settings in the program flash memory of the microcontrollers. 
  * Takes into account the possibility of placing a buffer of serialized data in the cleared flash memory.
@@ -37,17 +39,37 @@
  * - Although it is possible to edit data by pointer in the buffer, if necessary. 
  * But if required, the ability to update data fields can be added.
  * 
+ * The following field keys types are allowed:
+ * -------------------------------------------
+ * - const char * - null terminated string.
+ * - const char *, sizeof(id) - variable length binary data.
+ * - (u)int(8..64)_t - one integral number.
+ * 
+ * The following data types are allowed in fields:
+ * -------------------------------------------
+ * - (u)int(8..64)_t - one integral number.
+ * - float|double - one floating point number
+ * - uint8_t *id, sizeof(id) - variable length binary data.
+ * - const char * - null terminated string.
+ * - (u)int(8..64)_t[] - one-dimensional array of integral number
+ * - (float|double)[] - one-dimensional array of floating point number
+ * 
+ * Null terminated character strings:
+ * ---------------------------------
+ * To append and read null terminated character strings, use functions with the AsString suffix.
+ * When reading data of a string type, the size of the read data is returned without a null terminator.
+ * 
  * Fast use:
  * --------
  * #include "microprop.h"
  * 
  * Microprop prop(buffer, sizeof (buffer)); // Make Microprop object and assign buffer
  * 
- * prop.FieldExist(string || integer || enum); // Check the presence of a field by its identifier
- * prop.FieldType(string || integer || enum); // Determine the data type of a field
+ * prop.FieldExist(string || integer); // Check the presence of a field by its identifier
+ * prop.FieldType(string || integer); // Determine the data type of a field
  * 
- * prop.Append(string || integer || enum, true)); // Add data field
- * prop.Read(string || integer || enum, var_bool)); // Read data field
+ * prop.Append(string || integer, true)); // Add bool field
+ * prop.Read(string || integer, var_bool)); // Read bool field
  * 
  * Can read data into a larger buffer(value), i.e. Append(name, int8_t) => Read(name, int64_t)
  * 
@@ -58,11 +80,55 @@
  * prop.AssignBuffer((const)buffer, sizeof (buffer)); // Assign a buffer for read only mode
  * prop.AssignBuffer(buffer, sizeof (buffer), true); // Assign a buffer for read only mode
  * prop.FieldNext(ptr); // Get a pointer to the next field to iterate over the stored data
- * prop.FieldName(string || integer || enum, size_t *length = nullptr); // Get a pointer to a field name id
- * prop.FieldDataSize(string || integer || enum); // The size of the data stored in the field
+ * prop.FieldName(string || integer, size_t *length = nullptr); // Get a pointer to a field name id
+ * prop.FieldDataSize(string || integer); // The size of the data stored in the field
  * 
- * prop.Append(string || integer || enum, value || array)); // Adding different data types and field ID
- * prop.Read(string || integer || enum, value || array)); // Reading different ata Types and field ID
+ * prop.Append(string || blob || integer, value || array); // Adding different data types and field ID
+ * prop.Read(string || blob || integer, value || array); // Reading different data Types and field ID
+ * 
+ * prop.Append(string || blob || integer, uint8_t *, size_t); // Adding blob field
+ * prop.Read(string || blob || integer, uint8_t *, size_t); // Reading blob field
+ * 
+ * prop.AppendAsString(string || blob || integer, string); // Adding field as null terminated string
+ * const char * ReadAsString(string || blob || integer); // Reading field as null terminated string
+ * 
+ * Complete example of a class with overridden field key type:
+ * -----------------------------------------------------------
+ * class Property : public Microprop {
+ * public:
+ *   enum ID {
+ *    ID1, ID2, ID3
+ *  };
+ * 
+ *  template <typename ... Types>
+ *  inline const uint8_t * FieldExist(ID id, Types ... arg) {
+ *    return Microprop::FieldExist((uint8_t) id, arg...);
+ *  }
+ * 
+ *  template <typename ... Types>
+ *  inline size_t Append(ID id, Types ... arg) {
+ *    return Microprop::Append((uint8_t) id, arg...);
+ *  }
+ * 
+ *  template <typename T>
+ *  inline size_t Read(ID id, T & val) {
+ *    return Microprop::Read((uint8_t) id, val);
+ *  }
+ * 
+ *  inline size_t Read(ID id, uint8_t *data, size_t size) {
+ *    return Microprop::Read((uint8_t) id, data, size);
+ *  }
+ * 
+ *  template <typename ... Types>
+ *  inline size_t AppendAsString(ID id, Types ... arg) {
+ *    return Microprop::AppendAsString((uint8_t) id, arg...);
+ *  }
+ * 
+ *  template <typename ... Types>
+ *  inline const char * ReadAsString(ID id, Types... arg) {
+ *    return Microprop::ReadAsString((uint8_t) id, arg...);
+ *  }
+ *};
  * 
  */
 
@@ -143,7 +209,7 @@ public:
     }
 
     /**
-     * Ñheck for the presence of a field with the specified identifier. The search always starts from the beginning of the buffer
+     * Check for the presence of a field with the specified identifier. The search always starts from the beginning of the buffer
      * @param name Field identifier as a null-terminated text string
      * @return Returns a buffer pointer to the beginning of the field with the specified ID
      */
@@ -152,7 +218,7 @@ public:
     }
 
     /**
-     * Ñheck for the presence of a field with the specified identifier. The search always starts from the beginning of the buffer
+     * Check for the presence of a field with the specified identifier. The search always starts from the beginning of the buffer
      * @param name Field identifier as integer. The number is converted to begin endian order.
      * @return Returns a buffer pointer to the beginning of the field with the specified ID
      */
@@ -164,7 +230,7 @@ public:
     }
 
     /**
-     * Ñheck for the presence of a field with the specified identifier. The search always starts from the beginning of the buffer
+     * Check for the presence of a field with the specified identifier. The search always starts from the beginning of the buffer
      * @param name Field identifier as array of bytes of a given size
      * @return Returns a buffer pointer to the beginning of the field with the specified ID
      */
@@ -235,15 +301,15 @@ public:
             case DDWord: return 8;
             case Float: return 4;
             case Double: return 8;
+
             case Blob:
+            case String:
             case Array16:
             case Array32:
             case Array64:
             case ArrayFloat:
             case ArrayDouble:
-                return buffer[1] + 1;
-            case String:
-                return buffer[1] + 2;
+                return buffer[1];
             default:
                 break;
                 //Removed && Error - 0
@@ -273,8 +339,56 @@ public:
         return nullptr;
     }
 
-    template < typename T>
-    typename std::enable_if<std::is_arithmetic<T>::value && !std::is_array<T>::value && !std::is_reference<T>::value && !std::is_pointer<T>::value, size_t>::type
+    /*
+     * 
+     * Define helpers for SFINAE templates
+     * 
+     */
+
+#define MP_TEMPLATE_INT_KEY_ONLY(TYPE, RESULT)     \
+    template < typename TYPE> \
+    typename std::enable_if<std::is_integral<TYPE>::value, RESULT>::type
+
+#define MP_TEMPLATE_ARITHMETIC_ONLY(TYPE) \
+    template < typename TYPE> \
+    typename std::enable_if<std::is_arithmetic<TYPE>::value && !std::is_array<TYPE>::value && !std::is_reference<TYPE>::value && !std::is_pointer<TYPE>::value, size_t>::type
+
+#define MP_TEMPLATE_ARITHMETIC_FOR_INT_KEY(N,T)     \
+    template < typename N, typename T> \
+    typename std::enable_if<std::is_integral<N>::value && std::is_arithmetic<T>::value && \
+    !std::is_array<T>::value && !std::is_reference<T>::value && !std::is_pointer<T>::value, size_t>::type
+
+#define MP_TEMPLATE_ARRAY_ONLY(T)     \
+    template < typename T> \
+    typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) || \
+    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
+
+#define MP_TEMPLATE_ARRAY_FOR_INT_KEY(N,T)     \
+    template < typename N, typename T> \
+    typename std::enable_if<std::is_integral<N>::value && \
+    ((std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) || \
+    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value)), size_t>::type
+
+    /*
+     * 
+     * 
+     * Append field as simple numbers
+     * 
+     * 
+     */
+
+    MP_TEMPLATE_ARITHMETIC_FOR_INT_KEY(N, T)
+    inline Append(N name, T value) {
+        name = htobe(name);
+        return Append((const char *) &name, sizeof (name), value);
+    }
+
+    MP_TEMPLATE_ARITHMETIC_ONLY(T)
+    inline Append(const char *name, T value) {
+        return Append(name, strlen(name), value);
+    }
+
+    MP_TEMPLATE_ARITHMETIC_ONLY(T)
     Append(const char *name, uint8_t name_size, T value) {
         if (m_read_only) {
             return false;
@@ -300,9 +414,67 @@ public:
         return result;
     }
 
+    /*
+     * 
+     * Read field as simple numbers and one-dimensional arrays for all types of numbers
+     * 
+     */
+
     template < typename T>
-    typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
-    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
+    inline size_t Read(const char *name, T & value) {
+        return Read(name, strlen(name), value);
+    }
+
+    /*
+     * Covers all variants for an integer key type, i.e. all types of numbers and arrays
+     */
+    template < typename N, typename T>
+    typename std::enable_if<std::is_integral<N>::value && (std::is_arithmetic<T>::value ||
+            (std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
+            (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value)), size_t>::type
+    inline Read(N name, T & value) {
+        name = htobe(name);
+        return Read((const char *) &name, sizeof (name), value);
+    }
+
+    template < typename T>
+    size_t Read(const char *name, uint8_t name_size, T & value) {
+        const uint8_t * field = FieldExist(name, name_size);
+        uint8_t size = FieldDataSize(field);
+        Type field_type = FieldType(field);
+        if (field && size && field_type != Error) {
+            Type data_type = CalcDataType(value);
+            // For array check data type
+            // Most significant bit of type indicates about of array data
+            if ((data_type >> 3) && field_type != data_type) {
+                return 0;
+            }
+            uint8_t offset = FieldHeaderSize(field);
+            if (offset) {
+                return Deserialize(const_cast<uint8_t *> (&field[offset]), size, value);
+            }
+        }
+        return 0;
+    }
+
+    /*
+     * 
+     * Append fields as one-dimensional arrays for all types of numbers
+     * 
+     */
+
+    MP_TEMPLATE_ARRAY_FOR_INT_KEY(N, T)
+    inline Append(N name, T & value) {
+        name = htobe(name);
+        return Append((const char *) &name, sizeof (name), value);
+    }
+
+    MP_TEMPLATE_ARRAY_ONLY(T)
+    inline Append(const char *name, T & value) {
+        return Append(name, strlen(name), value);
+    }
+
+    MP_TEMPLATE_ARRAY_ONLY(T)
     Append(const char *name, uint8_t name_size, T & value) {
         if (m_read_only) {
             return false;
@@ -333,40 +505,26 @@ public:
         return result;
     }
 
-    template < typename T>
-    typename std::enable_if<std::is_arithmetic<T>::value && !std::is_array<T>::value && !std::is_reference<T>::value && !std::is_pointer<T>::value, size_t>::type
-    inline Append(const char *name, T value) {
-        return Append(name, strlen(name), value);
-    }
-
-    template < typename T>
-    typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
-    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
-    inline Append(const char *name, T & value) {
-        return Append(name, strlen(name), value);
-    }
-
-    template < typename T, typename N>
-    typename std::enable_if<(std::is_integral<N>::value && std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
-    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
-    inline Append(N name, T & value) {
+    /*
+     * 
+     * Generic methods for append binary data
+     * 
+     */
+    MP_TEMPLATE_INT_KEY_ONLY(T, size_t)
+    inline Append(T name, uint8_t *data, size_t data_size, Type type = Type::Blob) {
         name = htobe(name);
-        return Append((const char *) &name, sizeof (name), value);
+        return Append((const char *) &name, sizeof (name), data, data_size, type);
     }
 
-    template < typename T, typename N>
-    typename std::enable_if<std::is_arithmetic<T>::value && std::is_integral<N>::value &&
-    !std::is_array<T>::value && !std::is_reference<T>::value && !std::is_pointer<T>::value, size_t>::type
-    inline Append(N name, T value) {
-        name = htobe(name);
-        return Append((const char *) &name, sizeof (name), value);
+    inline size_t Append(const char *name, uint8_t *data, size_t data_size, Type type = Type::Blob) {
+        return Append(name, strlen(name), data, data_size, type);
     }
 
     size_t Append(const char *name, uint8_t name_size, uint8_t *data, size_t data_size, Type type = Type::Blob) {
         if (m_read_only || !m_data || !name || !name_size || !data || !data_size) {
             return false;
         }
-        uint8_t extra_size = (type == String) ? 3U : 2U;
+        uint8_t extra_size = FieldExtraSize(type) + 1;
         if ((data_size + name_size + extra_size) > FIELDSIZE_MAX || (data_size + name_size + extra_size + m_used) > m_size) {
             return false;
         }
@@ -388,139 +546,85 @@ public:
         return data_size;
     }
 
-    inline bool Append(const char *name, uint8_t *data, size_t data_size, Type type = Type::Blob) {
-        return Append(name, strlen(name), data, data_size, type);
+    /*
+     * 
+     * Generic methods for read binary data
+     * 
+     */
+
+    MP_TEMPLATE_INT_KEY_ONLY(T, size_t)
+    inline Read(T name, uint8_t *data, size_t size) {
+        name = htobe(name);
+        return Read((const char *) &name, sizeof (name), data, size);
     }
 
-    inline bool Append(const char *name, uint8_t name_size, const char * str) {
-        return Append(name, name_size, (uint8_t *) str, strlen(str), String);
+    inline size_t Read(const char *name, uint8_t *data, size_t data_size) {
+        return Read(name, strlen(name), data, data_size);
     }
 
-    inline bool Append(const char *name, const char * str) {
-        return Append(name, strlen(name), (uint8_t *) str, strlen(str), String);
-    }
-
-    template < typename T>
-    typename std::enable_if<std::is_integral<T>::value, bool>::type
-    inline Append(T name, const char * str) {
-        return Append(&name, sizeof (T), (uint8_t *) str, strlen(str), String);
-    }
-
-    template < typename T>
-    typename std::enable_if<std::is_arithmetic<T>::value && !std::is_array<T>::value && !std::is_reference<T>::value && !std::is_pointer<T>::value, size_t>::type
-    Read(const char *name, uint8_t name_size, T & value) {
+    size_t Read(const char *name, uint8_t name_size, uint8_t *data, size_t size) {
         const uint8_t * field = FieldExist(name, name_size);
-        uint8_t size = FieldDataSize(field);
+        uint8_t blob_size = FieldDataSize(field);
+        uint8_t offset = FieldHeaderSize(field);
         Type field_type = FieldType(field);
-        if (field && size && field_type != Error) {
-            uint8_t offset = FieldHeaderSize(field);
-            if (offset) {
-                return Deserialize(const_cast<uint8_t *> (&field[offset]), size, value);
-            }
+        if (field && blob_size && offset && field_type == Blob) {
+            memcpy(data, const_cast<uint8_t *> (&field[offset]), blob_size);
+            return blob_size;
         }
         return 0;
-    }
-
-    template < typename T>
-    typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
-    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
-    Read(const char *name, uint8_t name_size, T & value) {
-        const uint8_t * field = FieldExist(name, name_size);
-        uint8_t size = FieldDataSize(field);
-        Type field_type = FieldType(field);
-        if (field_type != CalcDataType(value)) {
-            return 0;
-        }
-        if (field && size && field_type != Error) {
-            uint8_t offset = FieldHeaderSize(field);
-            if (offset) {
-                // Most significant bit of type indicates data length is stored
-                if (field_type >> 3) {
-                    size -= 1;
-                }
-                return Deserialize(const_cast<uint8_t *> (&field[offset]), size, value);
-            }
-        }
-        return 0;
-    }
-
-    template < typename T>
-    typename std::enable_if<std::is_arithmetic<T>::value && !std::is_array<T>::value && !std::is_pointer<T>::value, size_t>::type
-    inline Read(const char *name, T & value) {
-        return Read(name, strlen(name), value);
-    }
-
-    template < typename T>
-    typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
-    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
-    inline Read(const char *name, T & value) {
-        return Read(name, strlen(name), value);
-    }
-
-    template < typename T, typename N>
-    typename std::enable_if<std::is_integral<N>::value &&
-    (std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
-    (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
-    inline Read(N name, T & value) {
-        name = htobe(name);
-        return Read((const char *) &name, sizeof (name), value);
-    }
-
-    template < typename N, typename T>
-    typename std::enable_if<std::is_integral<N>::value && std::is_arithmetic<T>::value &&
-    !std::is_array<T>::value && !std::is_reference<T>::value && !std::is_pointer<T>::value, size_t>::type
-    inline Read(N name, T & value) {
-        name = htobe(name);
-        return Read((const char *) &name, sizeof (name), value);
-    }
-
-    size_t Read(const char *name, uint8_t name_size, uint8_t *&data, Type type = Type::Blob) {
-        const uint8_t * field = FieldExist(name, name_size);
-        uint8_t size = FieldDataSize(field);
-        Type field_type = FieldType(field);
-        if (field && size && (field_type == Blob || field_type == String)) {
-            uint8_t offset = FieldHeaderSize(field);
-            if (offset) {
-                data = const_cast<uint8_t *> (&field[offset]);
-                return (field_type == String) ? size - 2 : size - 1;
-            }
-        }
-        data = nullptr;
-        return 0;
-    }
-
-    inline size_t Read(const char *name, uint8_t name_size, uint8_t * &ptr) {
-        return Read(name, name_size, ptr, Blob);
-    }
-
-    inline size_t Read(const char *name, uint8_t * &ptr) {
-        return Read(name, strlen(name), ptr, Blob);
-    }
-
-    template <typename T>
-    typename std::enable_if<std::is_integral<T>::value, size_t>::type
-    inline Read(T name, uint8_t * &ptr) {
-        name = htobe(name);
-        return Read((const char *) &name, sizeof (name), ptr, Blob);
-    }
-
-    inline size_t Read(const char *name, uint8_t name_size, const char * &str) {
-        return Read(name, name_size, (uint8_t *&) str, String);
-    }
-
-    inline size_t Read(const char *name, const char * &str) {
-        return Read(name, strlen(name), (uint8_t *&) str, String);
-    }
-
-    template <typename T>
-    typename std::enable_if<std::is_integral<T>::value, size_t>::type
-    inline Read(T name, const char * &str) {
-        name = htobe(name);
-        return Read((const char *) &name, sizeof (name), (uint8_t *&) str, String);
     }
 
     /*
+     * 
+     * Append fields as string
+     * 
+     */
+    inline size_t AppendAsString(const char *name, const char * str) {
+        return AppendAsString(name, strlen(name), str);
+    }
+
+    MP_TEMPLATE_INT_KEY_ONLY(T, size_t)
+    inline AppendAsString(T name, const char * str) {
+        name = htobe(name);
+        return AppendAsString((const char *) &name, sizeof (T), str);
+    }
+
+    inline size_t AppendAsString(const char *name, uint8_t name_size, const char * str) {
+        return Append(name, name_size, (uint8_t *) str, strlen(str), String);
+    }
+
+    /*
+     * 
+     * Read fields as string
+     * 
+     */
+
+    inline const char * ReadAsString(const char * name, size_t *length = nullptr) {
+        return ReadAsString(name, strlen(name), length);
+    }
+
+    MP_TEMPLATE_INT_KEY_ONLY(T, const char *)
+    inline ReadAsString(T name, size_t *length = nullptr) {
+        name = htobe(name);
+        return ReadAsString((const char *) &name, sizeof (name), length);
+    }
+
+    const char * ReadAsString(const char * name, size_t name_len, size_t *length = nullptr) {
+        const uint8_t * field = FieldExist(name, name_len);
+        Type type = FieldType(field);
+        uint8_t offset = FieldHeaderSize(field);
+        if (field && offset && type == String) {
+            if (length) {
+                *length = FieldDataSize(field);
+            }
+            return (const char *) &field[offset];
+        }
+    }
+
+    /*
+     * 
      * Converting to and from network byte order for integers
+     * 
      */
     template <typename T>
     typename std::enable_if<std::is_arithmetic<T>::value && !std::is_reference<T>::value && !std::is_array<T>::value, T>::type
@@ -743,8 +847,9 @@ public:
     static inline size_t FieldLength(const uint8_t *buffer) {
         size_t result = 0;
         FieldName(buffer, &result);
-        if (result) {
-            result += FieldDataSize(buffer) + 1;
+        Type type = FieldType(buffer);
+        if (result && type != Error) {
+            result += FieldDataSize(buffer) + FieldExtraSize(type) + 1;
         }
         return result;
     }

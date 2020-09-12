@@ -19,7 +19,7 @@
  * Library for minimal overhead serializing data for maximum savings size when transferring 
  * in embedded devices with limited memory size and low speed communication lines.
  * 
- * Подробное описание на Хабре https://habr.com/ru/post/518846/
+ * РџРѕРґСЂРѕР±РЅРѕРµ РѕРїРёСЃР°РЅРёРµ РЅР° РҐР°Р±СЂРµ https://habr.com/ru/post/518846/
  * 
  * Written on C ++ x11 using the template engine SFINAE (Substitution failure is not an error).
  * 

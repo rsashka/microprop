@@ -19,6 +19,8 @@
  * Library for minimal overhead serializing data for maximum savings size when transferring 
  * in embedded devices with limited memory size and low speed communication lines.
  * 
+ * Подробное описание на Хабре https://habr.com/ru/post/518846/
+ * 
  * Written on C ++ x11 using the template engine SFINAE (Substitution failure is not an error).
  * 
  * Key features:
@@ -68,8 +70,8 @@
  * prop.FieldExist(string || integer); // Check the presence of a field by its identifier
  * prop.FieldType(string || integer); // Determine the data type of a field
  * 
- * prop.Append(string || integer, true)); // Add bool field
- * prop.Read(string || integer, var_bool)); // Read bool field
+ * prop.Append(string || integer, true); // Add bool field
+ * prop.Read(string || integer, var_bool); // Read bool field
  * 
  * Can read data into a larger buffer(value), i.e. Append(name, int8_t) => Read(name, int64_t)
  * 

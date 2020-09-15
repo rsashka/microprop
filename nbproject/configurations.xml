@@ -4,6 +4,7 @@
     <logicalFolder name="SourceFiles"
                    displayName="Исходные файлы"
                    projectFiles="true">
+      <itemPath>microprop.cpp</itemPath>
       <itemPath>microprop.h</itemPath>
       <itemPath>microprop_test.cpp</itemPath>
     </logicalFolder>
@@ -14,6 +15,10 @@
     <logicalFolder name="ResourceFiles"
                    displayName="Файлы ресурсов"
                    projectFiles="true">
+      <itemPath>../msgpack-c/src/objectc.c</itemPath>
+      <itemPath>../msgpack-c/src/unpack.c</itemPath>
+      <itemPath>../msgpack-c/src/version.c</itemPath>
+      <itemPath>../msgpack-c/src/zone.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Файлы тестов"
@@ -37,6 +42,11 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
+        <cTool>
+          <incDir>
+            <pElem>../msgpack-c/include</pElem>
+          </incDir>
+        </cTool>
         <ccTool>
           <standard>8</standard>
           <incDir>
@@ -44,6 +54,7 @@
             <pElem>../..</pElem>
             <pElem>../gtest/googletest</pElem>
             <pElem>../gtest/googletest/include</pElem>
+            <pElem>../msgpack-c/include</pElem>
           </incDir>
         </ccTool>
         <linkerTool>
@@ -52,7 +63,17 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="../msgpack-c/src/objectc.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="../msgpack-c/src/unpack.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="../msgpack-c/src/version.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="../msgpack-c/src/zone.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="README.md" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="microprop.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="microprop.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -79,7 +100,17 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="../msgpack-c/src/objectc.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="../msgpack-c/src/unpack.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="../msgpack-c/src/version.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="../msgpack-c/src/zone.c" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="README.md" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="microprop.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="microprop.h" ex="false" tool="3" flavor2="0">
       </item>

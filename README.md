@@ -2,12 +2,30 @@ Micro property
 ==============
 Library for minimal overhead serializing data for maximum savings size when transferring in embedded devices with limited memory size and low speed communication lines.
 
-Подробное описание на Хабре https://habr.com/ru/post/518846/
+Notes an Habr https://habr.com/ru/post/518846/
+
+Brief description of the data storage format.
+
+Data serialization is based on Message Pack format.
+
+Properties are stored as key - value format without using the MAP type.
+For use property of type array, after the field key stored type array and values of the array elements.
+Supported numeric arrays only.
+The ID of the next field is located immediately after the last element of the array, also without using the MAP type.
+
+Used fork msgpack for C/C++ https://github.com/msgpack/msgpack-c library,
+where dynamic memory allocation was removed when packing and unpacking data from/to fixed static buffer.
+
+Additional features:
+Micro property does not allocate memory and only works with an external buffer.
+Stores null-terminated text strings, so you can work with strings directly by reference without having to copy them to an intermediate buffer.
 
 Written on C ++ x11 using the template engine SFINAE (Substitution failure is not an error).
 
 Key features:
 ------------
+In edit mode
+
 - Does not allocate memory. Works with external buffer only.
 - Overhead for fiexed size field - 1 byte (excluding field name length).
 - Overhead for blob, string and array field - 2 byte (excluding field name length).

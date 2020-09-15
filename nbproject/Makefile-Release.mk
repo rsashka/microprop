@@ -35,6 +35,11 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/_ext/b8a8e5b6/objectc.o \
+	${OBJECTDIR}/_ext/b8a8e5b6/unpack.o \
+	${OBJECTDIR}/_ext/b8a8e5b6/version.o \
+	${OBJECTDIR}/_ext/b8a8e5b6/zone.o \
+	${OBJECTDIR}/microprop.o \
 	${OBJECTDIR}/microprop_test.o
 
 
@@ -61,6 +66,31 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/microprop: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/microprop ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/_ext/b8a8e5b6/objectc.o: ../msgpack-c/src/objectc.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/b8a8e5b6
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/b8a8e5b6/objectc.o ../msgpack-c/src/objectc.c
+
+${OBJECTDIR}/_ext/b8a8e5b6/unpack.o: ../msgpack-c/src/unpack.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/b8a8e5b6
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/b8a8e5b6/unpack.o ../msgpack-c/src/unpack.c
+
+${OBJECTDIR}/_ext/b8a8e5b6/version.o: ../msgpack-c/src/version.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/b8a8e5b6
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/b8a8e5b6/version.o ../msgpack-c/src/version.c
+
+${OBJECTDIR}/_ext/b8a8e5b6/zone.o: ../msgpack-c/src/zone.c
+	${MKDIR} -p ${OBJECTDIR}/_ext/b8a8e5b6
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/b8a8e5b6/zone.o ../msgpack-c/src/zone.c
+
+${OBJECTDIR}/microprop.o: microprop.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/microprop.o microprop.cpp
 
 ${OBJECTDIR}/microprop_test.o: microprop_test.cpp
 	${MKDIR} -p ${OBJECTDIR}

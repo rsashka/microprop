@@ -32,7 +32,7 @@
  */
 namespace microprop {
 
-typedef unsigned int KeyType; ///< Only numbers are used as field identifiers
+typedef uint32_t KeyType; ///< Only numbers are used as field identifiers
 
 class Encoder {
 public:
@@ -56,11 +56,11 @@ public:
     inline uint8_t * GetBuffer() {
         return m_data;
     }
-
+    
     template < typename T>
     typename std::enable_if<std::is_arithmetic<T>::value, bool>::type
     inline Write(KeyType id, T value) {
-        return msgpack_write(id) && msgpack_write(value);
+        return id && msgpack_write(id) && msgpack_write(value);
     }
 
     template < typename T>
@@ -68,7 +68,7 @@ public:
     (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
     inline Write(KeyType id, T & value) {
         size_t temp = m_offset;
-        if (msgpack_write(id) && msgpack_pack_array(&m_pk, std::extent<T>::value) == 0) {
+        if (id && msgpack_write(id) && msgpack_pack_array(&m_pk, std::extent<T>::value) == 0) {
             for (size_t i = 0; i < std::extent<T>::value; i++) {
                 if (!msgpack_write(value[i])) {
                     m_offset = temp;
@@ -259,6 +259,10 @@ public:
         return false;
     }
 
+    inline bool CheckMsgpackKeyType(uint8_t value){
+        // Key ID can be a positive number only
+        return (value && !(value & 0x80)) || ((value & 0xFC) == 0xCC);    
+    }
 
     SCOPE(private) :
     uint8_t *m_data;

@@ -22,7 +22,7 @@ bool Encoder::AssignBuffer(uint8_t *data, size_t size) {
 
 bool Encoder::Write(KeyType id, uint8_t *data, size_t size) {
     size_t temp = m_offset;
-    if(msgpack_write(id) && msgpack_pack_bin_with_body(&m_pk, data, size) == 0) {
+    if(id && msgpack_write(id) && msgpack_pack_bin_with_body(&m_pk, data, size) == 0) {
         return true;
     }
     m_offset = temp;
@@ -32,7 +32,7 @@ bool Encoder::Write(KeyType id, uint8_t *data, size_t size) {
 bool Encoder::WriteAsString(KeyType id, const char *str) {
     size_t len = strlen(str) + 1; // include null char 
     size_t temp = m_offset;
-    if(msgpack_write(id) && msgpack_pack_str_with_body(&m_pk, str, len) == 0) {
+    if(id && msgpack_write(id) && msgpack_pack_str_with_body(&m_pk, str, len) == 0) {
         return true;
     }
     m_offset = temp;
@@ -82,7 +82,7 @@ bool Decoder::AssignBuffer(uint8_t *data, size_t size) {
 }
 
 bool Decoder::FieldFind(KeyType id) {
-    if(!m_data || !m_size) {
+    if(!m_data || !m_size || !CheckMsgpackKeyType(m_data[0])) {
         return false;
     }
     m_offset = 0;
@@ -127,7 +127,7 @@ bool Decoder::FieldNext(KeyType & id) {
 
     }
     // read field id and move offset next msgpack value
-    return msgpack_read(id);
+    return CheckMsgpackKeyType(m_data[m_offset]) && msgpack_read(id);
 }
 
 bool Decoder::Read(KeyType id, uint8_t *data, size_t size) {

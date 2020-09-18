@@ -165,7 +165,7 @@ TEST(Microprop, String) {
     EXPECT_EQ(sizeof (buffer), enc.GetSize());
 
     const char *str = "string";
-    EXPECT_TRUE(enc.WriteAsString(0, str));
+    EXPECT_TRUE(enc.WriteAsString(6, str));
     EXPECT_EQ(9, enc.GetUsed());
 
     EXPECT_TRUE(enc.WriteAsString((uint32_t) 1234, str));
@@ -181,8 +181,8 @@ TEST(Microprop, String) {
     size_t str_len;
     const char *res;
 
-    EXPECT_TRUE(dec.FieldFind(0));
-    res = dec.ReadAsString(0, &str_len);
+    EXPECT_TRUE(dec.FieldFind(6));
+    res = dec.ReadAsString(6, &str_len);
     EXPECT_EQ(7, str_len);
     EXPECT_STREQ(res, str);
 
@@ -323,6 +323,7 @@ TEST(Microprop, Array) {
     }
 }
 
+// Full enumeration of all possible of keys and types values
 TEST(Microprop, DISABLED_StressTest) {
 
     uint8_t buffer[32];

@@ -1,3 +1,6 @@
+Attention, the library is under refactoring!
+===========================================
+
 Micro property
 ==============
 Library for minimal overhead serializing data for maximum savings size when transferring in embedded devices with limited memory size and low speed communication lines.

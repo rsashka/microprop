@@ -22,17 +22,18 @@
  * 
  * Data serialization is based on Message Pack format.
  * 
- * Properties are stored as key - value format without using the MAP type.
- * For use property of type array, after the field key stored type array and values of the array elements.
+ * Properties are stored pair in key - value format without using the MAP type.
+ * For use property of type array, after the field key stored type array and data of the array elements.
  * Supported numeric arrays only.
  * The ID of the next field is located immediately after the last element of the array, also without using the MAP type.
  * 
  * Used fork msgpack for C/C++ https://github.com/msgpack/msgpack-c library,
  * where dynamic memory allocation was removed when packing and unpacking data from/to fixed static buffer.
+ * From unpack array type, return after found array type code without unpaking array elements.
  */
 namespace microprop {
 
-typedef uint32_t KeyType; ///< Only numbers are used as field identifiers
+typedef unsigned int KeyType; ///< Only numbers are used as field identifiers
 
 class Encoder {
 public:
@@ -49,14 +50,14 @@ public:
         return m_offset;
     }
 
-    inline size_t GetSize() {
-        return m_size;
+    inline size_t GetFree() {
+        return (m_data && m_size && m_size >= m_offset ) ? m_size - m_offset : 0;
     }
 
     inline uint8_t * GetBuffer() {
         return m_data;
     }
-    
+
     template < typename T>
     typename std::enable_if<std::is_arithmetic<T>::value, bool>::type
     inline Write(KeyType id, T value) {
@@ -108,6 +109,26 @@ public:
             return msgpack_pack_int32(&m_pk, value) == 0;
         } else if (std::is_same<int64_t, T>::value) {
             return msgpack_pack_int64(&m_pk, value) == 0;
+        } else if (std::is_same<char, T>::value) {
+            return msgpack_pack_char(&m_pk, value) == 0;
+        } else if (std::is_same<short, T>::value) {
+            return msgpack_pack_short(&m_pk, value) == 0;
+        } else if (std::is_same<int, T>::value) {
+            return msgpack_pack_int(&m_pk, value) == 0;
+        } else if (std::is_same<long, T>::value) {
+            return msgpack_pack_long(&m_pk, value) == 0;
+        } else if (std::is_same<long long, T>::value) {
+            return msgpack_pack_long_long(&m_pk, value) == 0;
+        } else if (std::is_same<unsigned char, T>::value) {
+            return msgpack_pack_unsigned_char(&m_pk, value) == 0;
+        } else if (std::is_same<unsigned short, T>::value) {
+            return msgpack_pack_unsigned_short(&m_pk, value) == 0;
+        } else if (std::is_same<unsigned int, T>::value) {
+            return msgpack_pack_unsigned_int(&m_pk, value) == 0;
+        } else if (std::is_same<unsigned long, T>::value) {
+            return msgpack_pack_unsigned_long(&m_pk, value) == 0;
+        } else if (std::is_same<unsigned long long, T>::value) {
+            return msgpack_pack_unsigned_long_long(&m_pk, value) == 0;
         } else if (std::is_same<float, T>::value) {
             return msgpack_pack_float(&m_pk, value) == 0;
         } else if (std::is_same<double, T>::value) {
@@ -259,9 +280,18 @@ public:
         return false;
     }
 
-    inline bool CheckMsgpackKeyType(uint8_t value){
-        // Key ID can be a positive number only
-        return (value && !(value & 0x80)) || ((value & 0xFC) == 0xCC);    
+    inline bool check_key_type(uint8_t value) {
+        // Key ID can be a positive number only above zero
+        // 
+        // MessagePack int format family:
+        // Int format family stores an integer in 1, 2, 3, 5, or 9 bytes.
+        // positive fixnum stores 7-bit positive integer - 0XXXXXXX
+        // negative fixnum stores 5-bit negative integer - 111YYYYY
+        // uint 8 stores a 8-bit unsigned integer              - 0xcc
+        // uint 16 stores a 16-bit big-endian unsigned integer - 0xcd
+        // uint 32 stores a 32-bit big-endian unsigned integer - 0xce
+        // uint 64 stores a 64-bit big-endian unsigned integer - 0xcf
+        return (value && !(value & 0x80)) || ((value & 0xFC) == 0xCC);
     }
 
     SCOPE(private) :

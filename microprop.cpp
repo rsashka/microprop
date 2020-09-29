@@ -82,7 +82,7 @@ bool Decoder::AssignBuffer(uint8_t *data, size_t size) {
 }
 
 bool Decoder::FieldFind(KeyType id) {
-    if(!m_data || !m_size || !CheckMsgpackKeyType(m_data[0])) {
+    if(!m_data || !m_size || !check_key_type(m_data[0])) {
         return false;
     }
     m_offset = 0;
@@ -127,7 +127,7 @@ bool Decoder::FieldNext(KeyType & id) {
 
     }
     // read field id and move offset next msgpack value
-    return CheckMsgpackKeyType(m_data[m_offset]) && msgpack_read(id);
+    return check_key_type(m_data[m_offset]) && msgpack_read(id);
 }
 
 bool Decoder::Read(KeyType id, uint8_t *data, size_t size) {

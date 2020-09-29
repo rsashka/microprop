@@ -11,7 +11,7 @@ TEST(Microprop, Bool) {
 
     uint8_t buffer[17];
     Encoder enc(buffer, sizeof (buffer));
-    EXPECT_EQ(sizeof (buffer), enc.GetSize());
+    EXPECT_EQ(sizeof (buffer), enc.GetFree());
 
     bool b = false;
     EXPECT_TRUE(enc.Write(1, b));
@@ -58,7 +58,7 @@ TEST(Microprop, FixedSize) {
     uint8_t buffer[500];
     Encoder enc(buffer, sizeof (buffer));
 
-    EXPECT_EQ(sizeof (buffer), enc.GetSize());
+    EXPECT_EQ(sizeof (buffer), enc.GetFree());
     EXPECT_EQ(0, enc.GetUsed());
 
     bool b = true;
@@ -162,7 +162,7 @@ TEST(Microprop, String) {
 
     uint8_t buffer[30];
     Encoder enc(buffer, sizeof (buffer));
-    EXPECT_EQ(sizeof (buffer), enc.GetSize());
+    EXPECT_EQ(sizeof (buffer), enc.GetFree());
 
     const char *str = "string";
     EXPECT_TRUE(enc.WriteAsString(6, str));
@@ -207,7 +207,7 @@ TEST(Microprop, Blob) {
 
     uint8_t buffer[1000];
     Encoder enc(buffer, sizeof (buffer));
-    EXPECT_EQ(sizeof (buffer), enc.GetSize());
+    EXPECT_EQ(sizeof (buffer), enc.GetFree());
 
     uint8_t b1[1] = {0};
     uint8_t b5[5] = {5, 5, 5, 5, 5};
@@ -252,7 +252,7 @@ TEST(Microprop, Array) {
 
     uint8_t buffer[1000];
     Encoder enc(buffer, sizeof (buffer));
-    EXPECT_EQ(sizeof (buffer), enc.GetSize());
+    EXPECT_EQ(sizeof (buffer), enc.GetFree());
 
     uint8_t a8[5] = {1, 2, 3, 4, 5};
     uint16_t a16[5] = {10, 20, 30, 40, 50};

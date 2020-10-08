@@ -182,6 +182,12 @@ public:
         return m_size;
     }
 
+    inline void TruncSize(size_t size) {
+        if (m_size > size) {
+            m_size = size;
+        }
+    }
+
     inline uint8_t * GetBuffer() {
         return m_data;
     }

@@ -90,12 +90,12 @@ ${OBJECTDIR}/_ext/b8a8e5b6/zone.o: ../msgpack-c/src/zone.c
 ${OBJECTDIR}/microprop.o: microprop.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -I.. -I../.. -I../gtest/googletest -I../gtest/googletest/include -I../msgpack-c/include -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/microprop.o microprop.cpp
+	$(COMPILE.cc) -g -I.. -I../.. -I../googletest/googletest -I../googletest/googletest/include -I../msgpack-c/include -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/microprop.o microprop.cpp
 
 ${OBJECTDIR}/microprop_test.o: microprop_test.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -I.. -I../.. -I../gtest/googletest -I../gtest/googletest/include -I../msgpack-c/include -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/microprop_test.o microprop_test.cpp
+	$(COMPILE.cc) -g -I.. -I../.. -I../googletest/googletest -I../googletest/googletest/include -I../msgpack-c/include -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/microprop_test.o microprop_test.cpp
 
 # Subprojects
 .build-subprojects:

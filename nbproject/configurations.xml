@@ -52,8 +52,8 @@
           <incDir>
             <pElem>..</pElem>
             <pElem>../..</pElem>
-            <pElem>../gtest/googletest</pElem>
-            <pElem>../gtest/googletest/include</pElem>
+            <pElem>../googletest/googletest</pElem>
+            <pElem>../googletest/googletest/include</pElem>
             <pElem>../msgpack-c/include</pElem>
           </incDir>
         </ccTool>

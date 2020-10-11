@@ -256,7 +256,7 @@ TEST(Microprop, Array) {
 
     uint8_t a8[5] = {1, 2, 3, 4, 5};
     uint16_t a16[5] = {10, 20, 30, 40, 50};
-    uint32_t a32[5] = {100, 200, 300, 400, 500};
+    uint32_t a32[6] = {100, 200, 300, 400, 500, 100};
     uint64_t a64[5] = {1000, 2000, 3000, 4000, 5000000000};
     float f[5] = {1.1, 2.2, 3.3, 4.4, 5.5};
     double d[5] = {1.11, 2.22, 3.33, 4.44, 5.55};
@@ -267,7 +267,7 @@ TEST(Microprop, Array) {
     EXPECT_TRUE(enc.Write(16, a16));
     EXPECT_EQ(14, enc.GetUsed());
 
-    EXPECT_TRUE(enc.Write(32, a32));
+    EXPECT_TRUE(enc.Write(32, a32, 5));
     EXPECT_EQ(28, enc.GetUsed());
 
     EXPECT_TRUE(enc.Write(64, a64));
@@ -294,7 +294,7 @@ TEST(Microprop, Array) {
     EXPECT_TRUE(dec.FieldFind(32));
     uint32_t a32_res[10]; // Larger than the original
     EXPECT_EQ(5, dec.Read(32, a32_res));
-    EXPECT_TRUE(memcmp(a32, a32_res, sizeof (a32)) == 0);
+    EXPECT_TRUE(memcmp(a32, a32_res, sizeof (uint32_t)*5) == 0);
 
     EXPECT_TRUE(dec.FieldFind(64));
     uint64_t a64_res[20]; // Larger than the original
@@ -324,6 +324,7 @@ TEST(Microprop, Array) {
 }
 
 // Full enumeration of all possible of keys and types values
+
 TEST(Microprop, DISABLED_StressTest) {
 
     uint8_t buffer[32];
@@ -365,4 +366,4 @@ GTEST_API_ int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-#include <gtest/googletest/src/gtest-all.cc>
+#include <googletest/googletest/src/gtest-all.cc>

@@ -51,7 +51,7 @@ public:
     }
 
     inline size_t GetFree() {
-        return (m_data && m_size && m_size >= m_offset ) ? m_size - m_offset : 0;
+        return (m_data && m_size && m_size >= m_offset) ? m_size - m_offset : 0;
     }
 
     inline uint8_t * GetBuffer() {
@@ -67,10 +67,13 @@ public:
     template < typename T>
     typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
     (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
-    inline Write(KeyType id, T & value) {
+    inline Write(KeyType id, T & value, size_t count = -1) {
         size_t temp = m_offset;
-        if (id && msgpack_write(id) && msgpack_pack_array(&m_pk, std::extent<T>::value) == 0) {
-            for (size_t i = 0; i < std::extent<T>::value; i++) {
+        if (count == -1) {
+            count = std::extent<T>::value;
+        }
+        if (id && msgpack_write(id) && msgpack_pack_array(&m_pk, count) == 0) {
+            for (size_t i = 0; i < count; i++) {
                 if (!msgpack_write(value[i])) {
                     m_offset = temp;
                     return false;

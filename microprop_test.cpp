@@ -227,25 +227,30 @@ TEST(Microprop, Blob) {
     EXPECT_TRUE(enc.Write(222222, b20, sizeof (b20)));
     EXPECT_EQ(54, enc.GetUsed());
 
-    EXPECT_FALSE(enc.Write(1, large, sizeof (large)));
-    EXPECT_EQ(54, enc.GetUsed());
+    EXPECT_TRUE(enc.Write(33, b10, 3));
+    EXPECT_EQ(60, enc.GetUsed());
+
+    EXPECT_FALSE(enc.Write(999, large, sizeof (large)));
+    EXPECT_EQ(60, enc.GetUsed());
 
     Decoder dec(buffer, enc.GetUsed());
 
-    EXPECT_TRUE(dec.Read(1, large, sizeof (b1)));
+    EXPECT_EQ(1, dec.Read(1, large, sizeof (b1)));
     EXPECT_TRUE(memcmp(large, b1, sizeof (b1)) == 0);
 
-    EXPECT_TRUE(dec.Read(55, large, sizeof (large)));
+    EXPECT_EQ(5, dec.Read(55, large, sizeof (large)));
     EXPECT_TRUE(memcmp(large, b5, sizeof (b5)) == 0);
 
-    EXPECT_TRUE(dec.Read(1000, large, sizeof (b10)));
+    EXPECT_EQ(10, dec.Read(1000, large, sizeof (b10)));
     EXPECT_TRUE(memcmp(large, b10, sizeof (b10)) == 0);
 
-    EXPECT_TRUE(dec.Read(222222, large, sizeof (large)));
+    EXPECT_EQ(20, dec.Read(222222, large, sizeof (large)));
     EXPECT_TRUE(memcmp(large, b20, sizeof (b20)) == 0);
 
-    EXPECT_FALSE(dec.Read(0, large, sizeof (large)));
-    EXPECT_FALSE(dec.Read(99999999, large, sizeof (large)));
+    EXPECT_EQ(3, dec.Read(33, large, sizeof (large)));
+    EXPECT_TRUE(memcmp(large, b10, 3) == 0);
+
+    EXPECT_FALSE(dec.Read(999, large, sizeof (large)));
 }
 
 TEST(Microprop, Array) {

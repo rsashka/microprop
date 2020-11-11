@@ -245,7 +245,7 @@ public:
         return 0;
     }
 
-    bool Read(KeyType id, uint8_t *data, size_t size);
+    size_t Read(KeyType id, uint8_t *data, size_t size);
 
     const char * ReadAsString(KeyType id, size_t *length = nullptr);
 

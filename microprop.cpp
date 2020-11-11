@@ -130,7 +130,7 @@ bool Decoder::FieldNext(KeyType & id) {
     return check_key_type(m_data[m_offset]) && msgpack_read(id);
 }
 
-bool Decoder::Read(KeyType id, uint8_t *data, size_t size) {
+size_t Decoder::Read(KeyType id, uint8_t *data, size_t size) {
     msgpack_unpacked msg;
     msgpack_unpacked_init(&msg);
 
@@ -143,11 +143,11 @@ bool Decoder::Read(KeyType id, uint8_t *data, size_t size) {
         if(value.type == MSGPACK_OBJECT_BIN) {
             if(value.via.bin.size <= size) {
                 memcpy(data, value.via.bin.ptr, value.via.bin.size);
-                return true;
+                return value.via.bin.size;
             }
         }
     }
-    return false;
+    return 0;
 }
 
 const char * Decoder::ReadAsString(KeyType id, size_t *length) {

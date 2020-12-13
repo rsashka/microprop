@@ -1,3 +1,11 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wctor-dtor-privacy"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
 #include <gtest/gtest.h>
 
 // Open private members for tests
@@ -66,7 +74,7 @@ TEST(Microprop, FixedSize) {
     uint16_t word = 333;
     volatile uint32_t dword = 400000;
     const uint64_t ddword = 0xFFFFFFFFFFFFFFFF - 1;
-    float f = 1.123;
+    float f = 1.123f;
     double d = 0.123;
 
     EXPECT_TRUE(enc.Write(1, b));
@@ -76,7 +84,7 @@ TEST(Microprop, FixedSize) {
     EXPECT_TRUE(enc.Write(3, byte));
     EXPECT_EQ(6, enc.GetUsed());
 
-    EXPECT_TRUE(enc.Write(30, (uint16_t) 30));
+    EXPECT_TRUE(enc.Write(30, static_cast<uint16_t> (30)));
     EXPECT_EQ(8, enc.GetUsed());
     EXPECT_TRUE(enc.Write(300, word));
     EXPECT_EQ(14, enc.GetUsed());
@@ -86,12 +94,12 @@ TEST(Microprop, FixedSize) {
     EXPECT_TRUE(enc.Write(4000, dword));
     EXPECT_EQ(28, enc.GetUsed());
 
-    EXPECT_TRUE(enc.Write(500000, (int64_t) 4));
+    EXPECT_TRUE(enc.Write(500000, static_cast<int64_t> (4)));
     EXPECT_EQ(34, enc.GetUsed());
     EXPECT_TRUE(enc.Write(500001, ddword));
     EXPECT_EQ(48, enc.GetUsed());
 
-    EXPECT_TRUE(enc.Write(0xF, 0.123456f));
+    EXPECT_TRUE(enc.Write(0xF, static_cast<float> (0.123456)));
     EXPECT_EQ(54, enc.GetUsed());
     EXPECT_TRUE(enc.Write(0xFFFF, f));
     EXPECT_EQ(62, enc.GetUsed());
@@ -147,7 +155,7 @@ TEST(Microprop, FixedSize) {
     EXPECT_FLOAT_EQ(f, read_f);
 
     EXPECT_TRUE(dec.Read(0xDD, read_d));
-    EXPECT_FLOAT_EQ(read_d, 0.121212);
+    EXPECT_FLOAT_EQ(read_d, 0.121212f);
     EXPECT_TRUE(dec.Read(0xDDDD, read_d));
     EXPECT_FLOAT_EQ(d, read_d);
 
@@ -168,7 +176,7 @@ TEST(Microprop, String) {
     EXPECT_TRUE(enc.WriteAsString(6, str));
     EXPECT_EQ(9, enc.GetUsed());
 
-    EXPECT_TRUE(enc.WriteAsString((uint32_t) 1234, str));
+    EXPECT_TRUE(enc.WriteAsString(static_cast<uint32_t> (1234), str));
     EXPECT_EQ(20, enc.GetUsed());
 
     const char *str2 = "str";
@@ -263,7 +271,7 @@ TEST(Microprop, Array) {
     uint16_t a16[5] = {10, 20, 30, 40, 50};
     uint32_t a32[6] = {100, 200, 300, 400, 500, 100};
     uint64_t a64[5] = {1000, 2000, 3000, 4000, 5000000000};
-    float f[5] = {1.1, 2.2, 3.3, 4.4, 5.5};
+    float f[5] = {1.1f, 2.2f, 3.3f, 4.4f, 5.5f};
     double d[5] = {1.11, 2.22, 3.33, 4.44, 5.55};
 
     EXPECT_TRUE(enc.Write(8, a8));
@@ -335,7 +343,6 @@ TEST(Microprop, DISABLED_StressTest) {
     uint8_t buffer[32];
 
     Decoder dec(buffer, sizeof (buffer));
-    bool res = true;
 
     memset(buffer, 0, sizeof (buffer));
 
@@ -347,7 +354,7 @@ TEST(Microprop, DISABLED_StressTest) {
     for (int val = 0xFFFF; val >= 0; val--) {
 
         for (size_t i = 0; i<sizeof (buffer); i += 2) {
-            *(uint16_t *) (&buffer[i]) = val;
+            *reinterpret_cast<uint16_t *> (&buffer[i]) = val;
         }
 
         std::cout << val << "\r";
@@ -372,3 +379,5 @@ GTEST_API_ int main(int argc, char **argv) {
     return RUN_ALL_TESTS();
 }
 #include <googletest/googletest/src/gtest-all.cc>
+
+#pragma GCC diagnostic pop

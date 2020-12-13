@@ -56,6 +56,7 @@
             <pElem>../googletest/googletest/include</pElem>
             <pElem>../msgpack-c/include</pElem>
           </incDir>
+          <commandLine>-Wall -Wextra -Wpedantic -Wctor-dtor-privacy -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wsign-promo -Wduplicated-branches -Wduplicated-cond -Wfloat-equal -Wshadow=compatible-local -Wcast-qual -Wconversion -Wzero-as-null-pointer-constant -Wsign-conversion -Wlogical-op -Wcast-align -Wredundant-decls</commandLine>
         </ccTool>
         <linkerTool>
           <linkerLibItems>

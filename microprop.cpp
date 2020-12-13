@@ -2,7 +2,7 @@
 
 using namespace microprop;
 
-Encoder::Encoder() : Encoder((uint8_t *) nullptr, 0) {
+Encoder::Encoder() : Encoder(nullptr, 0) {
 }
 
 Encoder::Encoder(uint8_t *data, size_t size) {
@@ -50,7 +50,7 @@ int Encoder::callback_func(void* data, const char* buf, size_t len) {
 }
 
 int Encoder::msgpack_callback(void* data, const char* buf, size_t len, void* callback_param) {
-    Encoder * obj = (Encoder *) callback_param;
+    Encoder * obj = static_cast<Encoder *> (callback_param);
     if(obj) {
         return obj->callback_func(data, buf, len);
     }
@@ -60,7 +60,7 @@ int Encoder::msgpack_callback(void* data, const char* buf, size_t len, void* cal
 /*
  * 
  */
-Decoder::Decoder() : Decoder((uint8_t *) nullptr, 0) {
+Decoder::Decoder() : Decoder(static_cast<uint8_t *> (nullptr), 0) {
 }
 
 Decoder::Decoder(uint8_t *data, size_t size) {
@@ -68,14 +68,14 @@ Decoder::Decoder(uint8_t *data, size_t size) {
 }
 
 Decoder::Decoder(const uint8_t *data, size_t size) {
-    AssignBuffer((uint8_t *) data, size);
+    AssignBuffer(const_cast<uint8_t *> (data), size);
 }
 
 Decoder::~Decoder() {
 }
 
 bool Decoder::AssignBuffer(uint8_t *data, size_t size) {
-    m_data = data;
+    const_cast<char*&> (m_data) = reinterpret_cast<char *> (data);
     m_size = size;
     m_offset = 0;
     return data && size;
@@ -105,7 +105,7 @@ bool Decoder::FieldNext(KeyType & id) {
         msgpack_unpacked msg;
         msgpack_unpacked_init(&msg);
 
-        if(msgpack_unpack_next(&msg, (const char *) m_data, m_size, &m_offset) < 0) {
+        if(msgpack_unpack_next(&msg, m_data, m_size, &m_offset) < 0) {
             return false;
         }
 
@@ -116,10 +116,10 @@ bool Decoder::FieldNext(KeyType & id) {
         if(array.type == MSGPACK_OBJECT_ARRAY) {
             size_t count = array.via.array.size;
             for (size_t i = 0; i < count; i++) {
-                if(msgpack_unpack_next(&msg, (const char *) m_data, m_size, &m_offset) < 0) {
+                if(msgpack_unpack_next(&msg, m_data, m_size, &m_offset) < 0) {
                     return false;
                 }
-                if(m_offset+(count-i) > m_size) {
+                if(m_offset + (count - i) > m_size) {
                     return false;
                 }
             }
@@ -134,7 +134,7 @@ size_t Decoder::Read(KeyType id, uint8_t *data, size_t size) {
     msgpack_unpacked msg;
     msgpack_unpacked_init(&msg);
 
-    if(FieldFind(id) && msgpack_unpack_next(&msg, (const char *) m_data, m_size, &m_offset)) {
+    if(FieldFind(id) && msgpack_unpack_next(&msg, m_data, m_size, &m_offset)) {
 
         // Must use only fixed static buffer
         assert(msg.zone == nullptr);
@@ -154,7 +154,7 @@ const char * Decoder::ReadAsString(KeyType id, size_t *length) {
     msgpack_unpacked msg;
     msgpack_unpacked_init(&msg);
 
-    if(FieldFind(id) && msgpack_unpack_next(&msg, (const char *) m_data, m_size, &m_offset)) {
+    if(FieldFind(id) && msgpack_unpack_next(&msg, m_data, m_size, &m_offset)) {
 
         // Must use only fixed static buffer
         assert(msg.zone == nullptr);

@@ -69,7 +69,7 @@ public:
     (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
     inline Write(KeyType id, T & value, size_t count = -1) {
         size_t temp = m_offset;
-        if (count == (size_t)-1) {
+        if (count == static_cast<size_t> (-1)) {
             count = std::extent<T>::value;
         }
         if (id && msgpack_write(id) && msgpack_pack_array(&m_pk, count) == 0) {
@@ -96,6 +96,7 @@ public:
     template < typename T>
     typename std::enable_if<std::is_arithmetic<T>::value, bool>::type
     inline msgpack_write(T value, size_t need_size = 0) {
+        ((void) need_size); // unused
         if (std::is_same<uint8_t, T>::value) {
             return msgpack_pack_uint8(&m_pk, value) == 0;
         } else if (std::is_same<uint16_t, T>::value) {
@@ -191,8 +192,8 @@ public:
         }
     }
 
-    inline uint8_t * GetBuffer() {
-        return m_data;
+    inline const uint8_t * GetBuffer() {
+        return const_cast<uint8_t *> (reinterpret_cast<const uint8_t *> (m_data));
     }
 
     template < typename T>
@@ -223,7 +224,7 @@ public:
             msgpack_unpacked msg;
             msgpack_unpacked_init(&msg);
 
-            if (msgpack_unpack_next(&msg, (const char *) m_data, m_size, &m_offset) >= 0) {
+            if (msgpack_unpack_next(&msg, const_cast<const char*> (m_data), m_size, &m_offset) >= 0) {
 
                 assert(msg.zone == nullptr);
 
@@ -260,20 +261,20 @@ public:
         msgpack_unpacked msg;
         msgpack_unpacked_init(&msg);
 
-        if (msgpack_unpack_next(&msg, (const char *) m_data, m_size, &m_offset) >= 0) {
+        if (msgpack_unpack_next(&msg, static_cast<const char *> (m_data), m_size, &m_offset) >= 0) {
 
             assert(msg.zone == nullptr);
 
             msgpack_object value = msg.data;
             if (value.type == MSGPACK_OBJECT_POSITIVE_INTEGER) {
-                T temp = (T) value.via.u64;
-                if ((uint64_t) temp == value.via.u64) { // check overflow
+                T temp = static_cast<T> (value.via.u64);
+                if (static_cast<uint64_t> (temp) == value.via.u64) { // check overflow
                     id = temp;
                     return true;
                 }
             } else if (value.type == MSGPACK_OBJECT_NEGATIVE_INTEGER) {
-                T temp = (T) value.via.i64;
-                if ((int64_t) temp == value.via.i64) { // check overflow
+                T temp = static_cast<T> (value.via.i64);
+                if (static_cast<int64_t> (temp) == value.via.i64) { // check overflow
                     id = temp;
                     return true;
                 }
@@ -281,7 +282,7 @@ public:
                 id = value.via.boolean;
                 return true;
             } else if (value.type == MSGPACK_OBJECT_FLOAT || value.type == MSGPACK_OBJECT_FLOAT32 || value.type == MSGPACK_OBJECT_FLOAT64) {
-                id = value.via.f64;
+                id = static_cast<T> (value.via.f64);
                 return true;
             }
         }
@@ -289,7 +290,7 @@ public:
         return false;
     }
 
-    inline bool check_key_type(uint8_t value) {
+    inline bool check_key_type(char value) {
         // Key ID can be a positive number only above zero
         // 
         // MessagePack int format family:
@@ -304,7 +305,7 @@ public:
     }
 
     SCOPE(private) :
-    uint8_t *m_data;
+    const char* m_data;
     size_t m_size;
     size_t m_offset;
 };

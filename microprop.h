@@ -51,7 +51,7 @@ public:
     }
 
     inline size_t GetFree() {
-        return (m_data && m_size && m_size >= m_offset) ? m_size - m_offset : 0;
+        return (m_data && m_size && m_size > m_offset) ? m_size - m_offset : 0;
     }
 
     inline uint8_t * GetBuffer() {

@@ -41,7 +41,7 @@ bool Encoder::WriteAsString(KeyType id, const char *str) {
 
 int Encoder::callback_func(void* data, const char* buf, size_t len) {
     assert(m_data == data);
-    if(m_offset + len <= m_size) {
+    if(m_offset + len < m_size) {
         memcpy(&m_data[m_offset], buf, len);
         m_offset += len;
         return 0;

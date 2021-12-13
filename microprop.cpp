@@ -15,36 +15,36 @@ Encoder::~Encoder() {
 bool Encoder::AssignBuffer(uint8_t *data, size_t size) {
     m_data = data;
     m_size = size;
-    m_offset = 0;
+    m_used = 0;
     msgpack_packer_init(&m_pk, data, &msgpack_callback, this);
     return data && size;
 }
 
 bool Encoder::Write(KeyType id, uint8_t *data, size_t size) {
-    size_t temp = m_offset;
+    size_t temp = m_used;
     if(id && msgpack_write(id) && msgpack_pack_bin_with_body(&m_pk, data, size) == 0) {
         return true;
     }
-    m_offset = temp;
+    m_used = temp;
     return false;
 }
 
 bool Encoder::WriteAsString(KeyType id, const char *str) {
     size_t len = strlen(str) + 1; // include null char 
-    size_t temp = m_offset;
+    size_t temp = m_used;
     if(id && msgpack_write(id) && msgpack_pack_str_with_body(&m_pk, str, len) == 0) {
         return true;
     }
-    m_offset = temp;
+    m_used = temp;
     return false;
 }
 
 int Encoder::callback_func(void* data, const char* buf, size_t len) {
     assert(m_data == data);
-    if(m_offset + len < m_size) {
+    if(m_used + len <= m_size) {
         if(buf && len) {
-            memcpy(&m_data[m_offset], buf, len);
-            m_offset += len;
+            memcpy(&m_data[m_used], buf, len);
+            m_used += len;
         } else {
             assert(buf == nullptr && len == 0);
         }

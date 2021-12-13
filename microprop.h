@@ -47,11 +47,11 @@ public:
     bool AssignBuffer(uint8_t *data, size_t size);
 
     inline size_t GetUsed() {
-        return m_offset;
+        return m_used;
     }
 
     inline size_t GetFree() {
-        return (m_data && m_size && m_size > m_offset) ? m_size - m_offset : 0;
+        return (m_data && m_size && m_size >= m_used) ? m_size - m_used : 0;
     }
 
     inline uint8_t * GetBuffer() {
@@ -68,20 +68,20 @@ public:
     typename std::enable_if<(std::is_array<T>::value && std::is_arithmetic<typename std::remove_extent<T>::type>::value) ||
     (std::is_reference<T>::value && std::is_arithmetic<typename std::remove_reference<T>::type>::value), size_t>::type
     inline Write(KeyType id, T & value, size_t count = -1) {
-        size_t temp = m_offset;
+        size_t temp = m_used;
         if (count == static_cast<size_t> (-1)) {
             count = std::extent<T>::value;
         }
         if (id && msgpack_write(id) && msgpack_pack_array(&m_pk, count) == 0) {
             for (size_t i = 0; i < count; i++) {
                 if (!msgpack_write(value[i])) {
-                    m_offset = temp;
+                    m_used = temp;
                     return false;
                 }
             }
             return true;
         }
-        m_offset = temp;
+        m_used = temp;
         return false;
     }
 
@@ -155,7 +155,7 @@ public:
     SCOPE(private) :
     uint8_t *m_data;
     size_t m_size;
-    size_t m_offset;
+    size_t m_used;
     msgpack_packer m_pk;
 
 };

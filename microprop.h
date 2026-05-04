@@ -44,6 +44,9 @@ public:
 
     virtual ~Encoder();
 
+    Encoder(const Encoder&) = delete;
+    const Encoder& operator=(const Encoder&) = delete;
+
     bool AssignBuffer(uint8_t *data, size_t size);
 
     inline size_t GetUsed() {
@@ -177,6 +180,9 @@ public:
     virtual ~Decoder();
 
     bool AssignBuffer(uint8_t *data, size_t size);
+
+    Decoder(const Decoder&) = delete;
+    const Decoder& operator=(const Decoder&) = delete;
 
     inline void Reset() {
         m_offset = 0;

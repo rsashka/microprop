@@ -5,7 +5,7 @@ using namespace microprop;
 Encoder::Encoder() : Encoder(nullptr, 0) {
 }
 
-Encoder::Encoder(uint8_t *data, size_t size) {
+Encoder::Encoder(uint8_t *data, size_t size) : m_data(nullptr), m_size(0), m_used(0), m_pk() {
     AssignBuffer(data, size);
 }
 
@@ -67,11 +67,11 @@ int Encoder::msgpack_callback(void* data, const char* buf, size_t len, void* cal
 Decoder::Decoder() : Decoder(static_cast<uint8_t *> (nullptr), 0) {
 }
 
-Decoder::Decoder(uint8_t *data, size_t size) {
+Decoder::Decoder(uint8_t *data, size_t size) : m_data(nullptr), m_size(0), m_offset(0) {
     AssignBuffer(data, size);
 }
 
-Decoder::Decoder(const uint8_t *data, size_t size) {
+Decoder::Decoder(const uint8_t *data, size_t size) : m_data(nullptr), m_size(0), m_offset(0) {
     AssignBuffer(const_cast<uint8_t *> (data), size);
 }
 
